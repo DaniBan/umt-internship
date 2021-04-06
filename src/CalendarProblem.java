@@ -16,15 +16,29 @@ public class CalendarProblem {
         }
     }
 
+    static void printCalendar(Prog[] calendar, String label){
+        System.out.print(label + ": ");
+        for(Prog p: calendar){
+            System.out.print("[" + p.start + ", " + p.end + "] ");
+        }
+        System.out.println();
+    }
+
     static void solve(Prog[] c1, Prog[] c2, float min1, float max1, float min2, float max2, float threshold){
+        // min1 and max1 represent the min and max ranges of the first calendar
+        // min2 and max2 represent the min and max ranges of the second calendar
+
         List<Prog> result = new ArrayList<Prog>();
 
 
-        System.out.println(c1.length + " " + c2.length);
-
         // check free time with lower bound
+        // if both have time before the first appointment
         if((c1[0].start - min1 >= threshold) && (c2[0].start - min2 >= threshold)){
+            // if there is enough time between when the first person is available and
+            // the starting time of the first appointment of the second person or vice versa
             if(c2[0].start - min1 >= threshold || c1[0].start - min2 >= threshold){
+                // add the appropriate result based on which first appointment starts first
+                // and on which lower bound (limit) is bigger
                 if(c1[0]. start < c2[0].start){
                     if(c1[0].start - max(min1, min2) >= threshold){
                         result.add(new Prog(max(min1, min2), c1[0].start));
@@ -35,67 +49,65 @@ public class CalendarProblem {
                     }
                 }
             }
-
-//            if(c1[0].start - min2 >= 0.5f){
-//                if(c2[0].start < c1[0].start){
-//                    result.add(new Prog(max(min1, min2), c2[0].start));
-//                } else {
-//                    result.add(new Prog(max(min1, min2), c1[0].start));
-//                }
-//            }
         }
 
         int i = 0, j = 0;
         while(i < c1.length && j < c2.length){
 
             int ok = 1;
-            System.out.println("[i, j] = [" + i + ", " + j + "]");
+            // if the appointment nb i form c1 ends before the appointment nb j from c2 starts
             if(c1[i].end < c2[j].start){
-//                System.out.println("i = " + i);
+                // if there is enough time
                 if(c2[j].start - c1[i].end >= threshold){
+                    // if the appointment from c1 is not the last one
                     if(i + 1 < c1.length){
+                        // if the appointment nb i+1 from c1 starts after the appointment nb j from c2
+                        // we add to the results a free time interval starting at the end of c1[i] and ending at the start of c2[j]
+                        // otherwise the added free time will have the ending time equal to c1[i+1].start
                         if(c1[i+1].start - c1[i].end >= threshold && c1[i+1].start > c2[j].start){
                             result.add(new Prog(c1[i].end, c2[j].start));
-//                            System.out.print("[" + c1[i].end + ", " + c2[j].start + "] ");
                         } else {
                             if(c1[i+1].start - c1[i].end >= threshold){
                                 result.add(new Prog(c1[i].end, c1[i + 1].start));
                             }
                         }
                     } else {
+                        // if the appointment from c1 is the last one simply add the free time interval to the result.
                         result.add(new Prog(c1[i].end, c2[j].start));
-//                        System.out.print("[" + c1[i].end + ", " + c2[j].start + "] ");
                     }
                 }
                 ok = 0;
                 i++;
-                System.out.println("case c1.end < c2.start");
             }
 
+            // if the appointment nb j form c2 ends before the appointment nb i from c1 starts
             if(c2[j].end < c1[i].start){
-//                System.out.println("j = " + j);
+                // if there is enough time
                 if(c1[i].start - c2[j].end >= threshold){
+                    // if the appointment from c2 is not the last one
                     if(j + 1 < c2.length){
+                        // if the appointment nb j+1 from c2 starts after the appointment nb i from c1
+                        // we add to the results a free time interval starting at the end of c2[j] and ending at the start of c1[i]
+                        // otherwise the added free time will have the ending time equal to c2[j+1].start
                         if(c2[j+1].start - c2[j].end >= threshold && c2[j+1].start > c1[i].start){
                             result.add(new Prog(c2[j].end, c1[i].start));
-//                            System.out.print("[" + c2[j].end + ", " + c1[i].start + "] ");
                         } else {
                             if(c2[j+1].start - c2[j].end >= threshold){
                                 result.add(new Prog(c2[j].end, c2[j + 1].start));
                             }
                         }
                     } else {
+                        // if the appointment from c2 is the last one simply add the free time interval to the result.
                         result.add(new Prog(c2[j].end, c1[i].start));
-//                        System.out.print("[" + c2[j].end + ", " + c1[i].start + "] ");
                     }
                 }
                 ok = 0;
                 j++;
-                System.out.println("case c2.end < c1.start");
             }
 
+            // if none of the current appointments starts one before the other
+            // increase i or j based on which appointment ends first
             if(ok == 1){
-                System.out.println("case contained");
                 if(c1[i].end < c2[j].end){
                     i++;
                 } else {
@@ -105,6 +117,7 @@ public class CalendarProblem {
 
         }
 
+        // if i or j got out of bounds we bring it inbounds
         if(i == c1.length){
             i--;
         }
@@ -112,11 +125,12 @@ public class CalendarProblem {
         if(j == c2.length){
             j--;
         }
-        System.out.println(i + " " + j);
 
-        int check = 0;
+
+        int check = 0; // used to verify whether the last element from c2 was taken into consideration
         int ok = 0;
 
+        // as log as there are remaining appointments in c1
         while(i < c1.length){
 
             if(i - 1 < 0){
@@ -124,50 +138,21 @@ public class CalendarProblem {
                 continue;
             }
 
-            if(check == 0){
+            if(check == 0){ // if the last element from c2 was not taken into consideration
                 if(c1[i].start - c1[i-1].end >= threshold && c1[i].start - c2[j].end >= threshold){
                     result.add(new Prog(max(c2[j].end, c1[i-1].end), c1[i].start));
-//                        System.out.print("[" + c1[i].end + ", " + c2[j].start + "] ");
-                    check = 1;
+                    check = 1; // mark that the last element from c2 was taken into consideration
                 }
             } else {
+                // add the free time intervals between the left appointments from c1
                 if(c1[i].start - c1[i-1].end >= threshold){
                     result.add(new Prog(c1[i-1].end, c1[i].start));
                 }
             }
-
-//            if(i + 1 < c1.length){
-//                if(check == 0){
-//                    if((c1[i+1].start - c1[i].end >= threshold) && (c1[i].start - c2[j].end >= threshold)){
-//                        result.add(new Prog(max(c2[j].end, c1[i-1].end), c1[i].start));
-////                        System.out.print("[" + c1[i].end + ", " + c2[j].start + "] ");
-//                        check = 1;
-//                    }
-//                } else {
-//                    if(c1[i+1].start - c1[i].end >= threshold){
-//                        result.add(new Prog(c1[i].end, c1[i+1]. start)); //HERE
-//                        ok = 1;
-//                    }
-//                }
-//
-//            } else {
-//                if(c1[i].start - c2[j].end >= threshold && (c1[i].start - c1[i - 1].end >= threshold)){
-//                    if(c1[i-1].end < c2[j].end){
-//                        if(check == 0){
-//                            result.add(new Prog(c2[j].end, c1[i].start));
-//                        }
-//                    } else {
-//                        if(ok == 0){
-//                            result.add(new Prog(c1[i-1].end, c1[i].start)); //HERE
-//                        }
-//                    }
-//                }
-////                System.out.println("[" + c2[j].end + ", " + c1[i].start + "] ");
-//                check = 1;
-//            }
             i++;
         }
 
+        // if i or j got out of bounds we bring it inbounds
         if(i == c1.length){
             i--;
         }
@@ -176,8 +161,10 @@ public class CalendarProblem {
             j--;
         }
 
-        check = 0;
+        check = 0; // used to verify whether the last element from c1 was taken into consideration
         ok = 0;
+
+        // as log as there are remaining appointments in c2
         while(j < c2.length){
 
             if(j - 1 < 0){
@@ -185,48 +172,23 @@ public class CalendarProblem {
                 continue;
             }
 
-            if(check == 0){
+            if(check == 0){ // if the last element from c1 was not taken into consideration
                 if(c2[j].start - c2[j-1].end >= threshold && c2[j].start - c1[i].end >= threshold){
                     result.add(new Prog(max(c1[i].end, c2[j-1].end), c2[j].start));
-//                        System.out.print("[" + c1[i].end + ", " + c2[j].start + "] ");
-                    check = 1;
+                    check = 1; // mark that the last element from c1 was taken into consideration
                 }
             } else {
+                // add the free time intervals between the left appointments from c2
                 if(c2[j].start - c2[j-1].end >= threshold){
                     result.add(new Prog(c2[j-1].end, c2[j].start));
                 }
             }
-
-//            if(j + 1 < c2.length){
-//                if(check == 0){
-//                    if((c2[j+1].start - c2[j].end >= threshold) && (c2[j].start - c1[i].end >= threshold)){
-//                        result.add(new Prog(c1[i].end, c2[j].start));
-////                            System.out.print("[" + c1[i].end + ", " + c2[j].start + "] ");
-//                        check = 1;
-//                    }
-//                } else {
-//                    if(c2[j+1].start - c2[j].end >= threshold && (max1 - c2[j + 1].start >= threshold)){
-//                        result.add(new Prog(c2[j].end, c2[j+1]. start));
-//                        ok = 1;
-//                    }
-//                }
-//
-//            } else {
-//                if(c2[j].start - c1[i].end >= threshold && (c2[j].start - c2[j-1].end >= threshold)) {
-//                    if(c2[j-1].end < c1[i].end){
-//                        result.add(new Prog(c1[i].end, c2[j].start));
-//                    } else {
-//                        if(ok == 0){
-//                            result.add(new Prog(c2[j-1].end, c2[j].start));
-//                        }
-//                    }
-//                }
-//                check = 1;
-//            }
+            
             j++;
 
         }
 
+        // if i or j got out of bounds we bring it inbounds
         if(i == c1.length){
             i--;
         }
@@ -245,6 +207,7 @@ public class CalendarProblem {
             }
         }
 
+        System.out.print("Output: ");
         for(Prog p: result){
             System.out.print("[" + p.start + ", " + p.end + "] ");
         }
@@ -261,9 +224,26 @@ public class CalendarProblem {
         Prog[] c5 = {new Prog(10,13), new Prog(13.5f,14), new Prog(15,17), new Prog(18,18.5f)};
         Prog[] c6 = {new Prog(11,12)};
 
-//        solve(c1, c2, 9.0f, 20.0f, 10.0f, 18.5f, 0.5f);
+        // min1 and max1 represent the min and max ranges of the first calendar
+        // min2 and max2 represent the min and max ranges of the second calendar
+
+        // Test Case 1
+        printCalendar(c1, "Calendar 1");
+        printCalendar(c2, "Calendar 2");
+        solve(c1, c2, 9.0f, 20.0f, 10.0f, 18.5f, 0.5f);
+        System.out.println();
+
+        // Test Case 2
+        printCalendar(c3, "Calendar 3");
+        printCalendar(c4, "Calendar 4");
         solve(c3, c4, 8.0f, 22.0f, 9.0f, 20.0f, 0.5f);
-//        solve(c5, c6, 8.0f, 18.5f, 9.0f, 20.0f, 0.5f);
+        System.out.println();
+
+
+        // Test Case 3
+        printCalendar(c1, "Calendar 5");
+        printCalendar(c2, "Calendar 6");
+        solve(c5, c6, 8.0f, 18.5f, 9.0f, 20.0f, 0.5f);
 
     }
 }
